@@ -21,30 +21,32 @@ def encryptData(data):
   f = cryptography.fernet.Fernet(loadMasterPassword())
   with open("./vault.txt", "rb") as vaultReader:
     encryptedData = vaultReader.read()
-  print(encryptedData)
-  decryptedData = f.decrypt(encryptedData)
-  print(decryptedData)
-  print(data)
-  newData = decryptedData.decode() + data
-  return f.encrypt(newData.encode())
+  if encryptedData.decode() == '':
+    return f.encrypt(data.encode())
+  else:
+    decryptedData = f.decrypt(encryptedData)
+    newData = decryptedData.decode() + data
+    print(newData)
+    return f.encrypt(newData.encode())
 
 def decryptData(encryptedData):
   f = cryptography.fernet.Fernet(loadMasterPassword())
   return f.decrypt(encryptedData)
 
 def appendNewPassword():
-  with open("./vault.txt", "ab") as vaultAppender:
-    print()
-    userName = input("Veuillez entrer un nom d'utilisateur : ")
-    password = input("Veuillez entrer le mot de passe : ")
-    website = input("Veuillez entrer l'adresse du site web : ")
-    print()
+  print()
+  userName = input("Veuillez entrer un nom d'utilisateur : ")
+  password = input("Veuillez entrer le mot de passe : ")
+  website = input("Veuillez entrer l'adresse du site web : ")
+  print()
 
-    userNameLine = "Nom d'utilisateur : " + userName + "\n"
-    passwordLine = "Mot de passe : " + password + "\n"
-    websiteLine = "Site Web : " + website + "\n\n"
+  userNameLine = "Nom d'utilisateur : " + userName + "\n"
+  passwordLine = "Mot de passe : " + password + "\n"
+  websiteLine = "Site Web : " + website + "\n\n"
 
-    vaultAppender.write(encryptData((userNameLine + passwordLine + websiteLine)))
+  encryptedData = encryptData((userNameLine + passwordLine + websiteLine))
+  with open("./vault.txt", "wb") as vaultWriter:
+    vaultWriter.write(encryptedData)
 
 def readPasswords():
   encryptedData = ''
